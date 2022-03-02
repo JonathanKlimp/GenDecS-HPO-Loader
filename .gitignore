@@ -43,3 +43,6 @@ buildNumber.properties
 # Ignores Intellij IDEA files.
 .IDEA/
 *.iml
+
+# OS generated files
+.DS_Store
