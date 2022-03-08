@@ -4,11 +4,18 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.util.FileManager;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 public class JenaSparQL {
     Model model = FileManager.getInternal().loadModelInternal("data/hp.owl");
+    String hpoID;
+    ArrayList<String> parents;
+    ArrayList<String> subClasses;
+
+
+    public JenaSparQL(String id) {
+        hpoID = id;
+    }
 
 
     public ResultSet querySubClasses(String hpoID) {
@@ -47,6 +54,7 @@ public class JenaSparQL {
         return queryExecution.execSelect();
     }
 
+
     public ArrayList<String> getParents(ResultSet resultSet) {
         ArrayList<String> parents = new ArrayList<>();
         if(resultSet.hasNext()) {
@@ -66,6 +74,7 @@ public class JenaSparQL {
         }
         return parents;
     }
+
 
     public ArrayList<String> getSubClasses(ResultSet resultSet) {
         ArrayList<String> hpoTerms = new ArrayList<>();
@@ -88,14 +97,22 @@ public class JenaSparQL {
         return hpoTerms;
     }
 
+
     public void executeQuery() {
-        String hpoID = "HP_0500015";
         ResultSet resultsParents = queryParentClass(hpoID);
         ResultSet resultsSubClasses = querySubClasses(hpoID);
 
-        ArrayList<String> parents = getParents(resultsParents);
-        ArrayList<String> subClasses = getSubClasses(resultsSubClasses);
+        parents = getParents(resultsParents);
+        subClasses = getSubClasses(resultsSubClasses);
+    }
 
 
+    public ArrayList<String> getParents() {
+        return parents;
+    }
+
+
+    public ArrayList<String> getSubClasses() {
+        return subClasses;
     }
 }
