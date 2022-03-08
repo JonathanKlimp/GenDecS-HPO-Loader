@@ -1,48 +1,95 @@
-import org.apache.jena.ontology.OntModel;
-import org.apache.jena.ontology.OntModelSpec;
 import org.apache.jena.query.*;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.shared.JenaException;
 import org.apache.jena.util.FileManager;
 
-import java.io.InputStream;
+import java.util.ArrayList;
 
 public class JenaSparQL {
-    public void executeQuery() {
-//        FileManager.get().addLocatorClassLoader(QuerySparql.class.getClassLoader());
-        String queryString =
+    Model model = FileManager.getInternal().loadModelInternal("data/hp.owl");
+
+
+    public ResultSet querySubClasses(String hpoID) {
+        String queryString = String.format(
                 """
                         PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
                         PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-                        SELECT DISTINCT ?id str(?label)
+                        SELECT DISTINCT ?id ?label
                         WHERE {
-                        ?id rdfs:subClassOf* <http://purl.obolibrary.org/obo/HP_0500015> .
+                        ?id rdfs:subClassOf* <http://purl.obolibrary.org/obo/%s> .
                         ?id rdfs:label ?label
                         }
-                """;
+                """, hpoID);
+        QueryFactory.create(queryString);
+        QueryExecution queryExecution = QueryExecutionFactory.create(queryString, model);
+        return queryExecution.execSelect();
+    }
 
-        Model model = FileManager.getInternal().loadModelInternal("data/hp.owl");
+
+    public ResultSet queryParentClass(String hpoID) {
+        String queryString =
+
+                String.format("""
+                                                PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+                        PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+                        PREFIX owl: <http://www.w3.org/2002/07/owl#>
+                        SELECT DISTINCT ?predicate ?label
+                        WHERE {
+                            <http://purl.obolibrary.org/obo/%s> ?predicate ?label .
+                        }
+                        
+                        """, hpoID);
 
         QueryFactory.create(queryString);
         QueryExecution queryExecution = QueryExecutionFactory.create(queryString, model);
-        ResultSet resultSet = queryExecution.execSelect();
+        return queryExecution.execSelect();
+    }
 
-
+    public void getParents(ResultSet resultSet) {
         if(resultSet.hasNext()) {
             System.out.println("Has results!!");
             while(resultSet.hasNext()) {
                 QuerySolution querySolution = resultSet.nextSolution();
-//                Literal literal = querySolution.getLiteral("id");
-//                System.out.println(literal);
 
-                Resource resource = querySolution.getResource("id"); //59
+                Resource resource = querySolution.getResource("predicate");
                 System.out.println(resource.getLocalName());
             }
+
         } else {
             System.out.println("No results :((");
         }
+    }
+
+    public ArrayList<String> getSubClasses(ResultSet resultSet) {
+        ArrayList<String> hpoTerms = new ArrayList<>();
+        if(resultSet.hasNext()) {
+            System.out.println("Has results!!");
+            while(resultSet.hasNext()) {
+                QuerySolution querySolution = resultSet.nextSolution();
+
+                Literal literal = querySolution.getLiteral("label");
+                hpoTerms.add(literal.getString());
+
+//                Resource resource = querySolution.getResource("id");
+                // print hpo id's
+//                System.out.println(resource.getLocalName());
+            }
+
+        } else {
+            System.out.println("No results");
+        }
+        return hpoTerms;
+    }
+
+    public void executeQuery() {
+        String hpoID = "HP_0500015";
+        ResultSet resultsParents = queryParentClass(hpoID);
+        ResultSet resultsSubClasses = querySubClasses(hpoID);
+
+//        getParents(resultsParents);
+        ArrayList<String> subClasses = getSubClasses(resultsSubClasses);
+
+
     }
 }
