@@ -4,6 +4,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.util.FileManager;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 public class JenaSparQL {
@@ -46,19 +47,24 @@ public class JenaSparQL {
         return queryExecution.execSelect();
     }
 
-    public void getParents(ResultSet resultSet) {
+    public ArrayList<String> getParents(ResultSet resultSet) {
+        ArrayList<String> parents = new ArrayList<>();
         if(resultSet.hasNext()) {
             System.out.println("Has results!!");
             while(resultSet.hasNext()) {
                 QuerySolution querySolution = resultSet.nextSolution();
 
                 Resource resource = querySolution.getResource("predicate");
-                System.out.println(resource.getLocalName());
+                if(resource.getLocalName().equals("subClassOf")) {
+                    // adds id of the parent
+                    Resource literal = querySolution.getResource("label");
+                    parents.add(literal.getLocalName());
+                }
             }
-
         } else {
-            System.out.println("No results :((");
+            System.out.println("No results");
         }
+        return parents;
     }
 
     public ArrayList<String> getSubClasses(ResultSet resultSet) {
@@ -87,7 +93,7 @@ public class JenaSparQL {
         ResultSet resultsParents = queryParentClass(hpoID);
         ResultSet resultsSubClasses = querySubClasses(hpoID);
 
-//        getParents(resultsParents);
+        ArrayList<String> parents = getParents(resultsParents);
         ArrayList<String> subClasses = getSubClasses(resultsSubClasses);
 
 
